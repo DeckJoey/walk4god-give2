@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function(){
+  try{
+    var saved = localStorage.getItem('theme');
+    var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+  }catch(e){}
+})();
+</script>
 <title>The Walk | Walk 4 God Podcast</title>
 <meta name="description" content="The Walk is a community walking together in faith. Home of the Walk 4 God podcast.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,11 +27,30 @@
     --gold:#A7ABB3;
     --gold-light:#E7E9EC;
     --glow-rgb: 255,255,255;
+    --noise-rgb: 255,255,255;
+    --bg-alt-rgb: 4,4,6;
     --line: rgba(241,243,246,0.12);
+    --on-ink:#06070a;
 
     --display: 'Fraunces', serif;
     --body: 'Space Grotesk', sans-serif;
     --mono: 'JetBrains Mono', monospace;
+  }
+
+  :root[data-theme="light"]{
+    --bg:#F5F5F3;
+    --bg-alt:#FFFFFF;
+    --card: rgba(10,11,14,0.035);
+    --card-line: rgba(60,90,160,0.14);
+    --ink:#0A0B0E;
+    --ink-dim:#5A5F68;
+    --gold:#5C5F66;
+    --gold-light:#3A3D42;
+    --glow-rgb: 10,11,14;
+    --noise-rgb: 10,11,14;
+    --bg-alt-rgb: 255,255,255;
+    --line: rgba(10,11,14,0.12);
+    --on-ink:#F1F3F6;
   }
 
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -31,14 +59,15 @@
   body{
     background:
       radial-gradient(ellipse 900px 500px at 50% -8%, rgba(var(--glow-rgb),0.10), transparent 60%),
-      repeating-linear-gradient(0deg, rgba(255,255,255,0.028) 0px, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 46px),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.028) 0px, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 46px),
+      repeating-linear-gradient(0deg, rgba(var(--noise-rgb),0.028) 0px, rgba(var(--noise-rgb),0.028) 1px, transparent 1px, transparent 46px),
+      repeating-linear-gradient(90deg, rgba(var(--noise-rgb),0.028) 0px, rgba(var(--noise-rgb),0.028) 1px, transparent 1px, transparent 46px),
       var(--bg);
     color:var(--ink);
     font-family:var(--body);
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
+    transition:background-color .3s ease, color .3s ease;
   }
 
   a{ color:inherit; text-decoration:none; }
@@ -84,7 +113,7 @@
     animation:beaconPulse 2.6s ease-out infinite;
   }
   .waypoint svg{ width:13px; height:13px; position:relative; z-index:1; }
-  .waypoint svg path{ fill:#0A0B0E; }
+  .waypoint svg path{ fill:var(--on-ink); }
 
   h1,h2,h3{ font-family:var(--display); font-weight:600; line-height:1.08; letter-spacing:-0.01em; }
 
@@ -98,7 +127,7 @@
   .btn:hover{ transform:translateY(-2px); }
   .btn:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(var(--glow-rgb),0.55); }
 
-  .btn-primary{ background:var(--ink); color:#06070a; }
+  .btn-primary{ background:var(--ink); color:var(--on-ink); }
   .btn-primary:hover{ background:var(--gold-light); box-shadow:0 0 24px rgba(var(--glow-rgb),0.35); }
 
   .btn-gold{
@@ -186,10 +215,10 @@
 
   .mobile-menu{
     position:fixed; top:0; right:0; height:100vh; width:min(300px,80vw);
-    background:rgba(6,7,10,0.97);
+    background:rgba(var(--bg-alt-rgb),0.97);
     -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
     border-left:1px solid rgba(var(--glow-rgb),0.18);
-    box-shadow:-20px 0 60px rgba(0,0,0,0.55);
+    box-shadow:-20px 0 60px rgba(0,0,0,0.35);
     display:flex; flex-direction:column; align-items:flex-start;
     gap:22px; padding:90px 32px 32px;
     transform:translateX(100%);
@@ -203,8 +232,19 @@
   .mobile-menu a::after{ display:none; }
   .mobile-menu a.btn.btn-primary{
     margin-top:8px; width:100%; text-align:center; justify-content:center;
-    color:#06070a !important;
+    color:var(--on-ink) !important;
   }
+
+  .theme-toggle-btn{
+    margin-bottom:8px;
+    width:40px; height:40px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    background:transparent; border:1.5px solid rgba(var(--glow-rgb),0.3);
+    color:var(--ink);
+    cursor:pointer; transition:background .2s ease, border-color .2s ease;
+  }
+  .theme-toggle-btn:hover{ background:rgba(var(--glow-rgb),0.08); }
 
   .menu-overlay{
     position:fixed; inset:0; background:rgba(0,0,0,0.5);
@@ -362,7 +402,7 @@
     box-shadow:0 0 14px rgba(var(--glow-rgb),0.3);
   }
   .social-card .icon svg{ width:19px; height:19px; }
-  .social-card .icon svg path{ fill:#0A0B0E; }
+  .social-card .icon svg path{ fill:var(--on-ink); }
   .social-card .handle{ font-weight:600; font-size:15.5px; }
   .social-card .platform{ font-size:13px; color:var(--ink-dim); font-family:var(--mono); text-transform:uppercase; letter-spacing:0.05em;}
 
@@ -496,6 +536,11 @@
 
   <div class="menu-overlay" id="menuOverlay"></div>
   <div class="mobile-menu" id="mobileMenu">
+    <button type="button" class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle light/dark mode">
+      <svg id="themeIconMoon" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="themeIconSun" viewBox="0 0 24 24" width="18" height="18" style="display:none"><path fill="currentColor" d="M12 4.5a1 1 0 0 1-1-1V2a1 1 0 0 1 2 0v1.5a1 1 0 0 1-1 1zm0 15a1 1 0 0 1 1 1V22a1 1 0 0 1-2 0v-1.5a1 1 0 0 1 1-1zm7.5-7.5a1 1 0 0 1 1-1H22a1 1 0 0 1 0 2h-1.5a1 1 0 0 1-1-1zm-15 0a1 1 0 0 1 1 1v0a1 1 0 0 1-2 0v0a1 1 0 0 1 1-1zM18.36 5.64a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 1 1-1.42-1.42zM6.34 17.66a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 1 1-1.42-1.42zM18.36 18.36a1 1 0 0 1-1.42 1.42l-1.06-1.06a1 1 0 1 1 1.42-1.42zM6.34 6.34A1 1 0 0 1 4.92 4.92L6 6a1 1 0 1 1-1.42 1.42zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/></svg>
+    </button>
+
     <a href="#who-we-are">Who We Are</a>
     <a href="#team">Get to Know Us</a>
     <a href="#podcast">Walk 4 God</a>
@@ -530,6 +575,46 @@
     menu.querySelectorAll('a').forEach(function(a){
       a.addEventListener('click', closeMenu);
     });
+
+    // ---------- theme toggle ----------
+    var themeBtn = document.getElementById('themeToggleBtn');
+    var iconMoon = document.getElementById('themeIconMoon');
+    var iconSun = document.getElementById('themeIconSun');
+
+    function currentTheme(){
+      return document.documentElement.getAttribute('data-theme') || 'dark';
+    }
+
+    function updateToggleUI(){
+      if(currentTheme() === 'light'){
+        iconMoon.style.display = 'none';
+        iconSun.style.display = '';
+      } else {
+        iconMoon.style.display = '';
+        iconSun.style.display = 'none';
+      }
+    }
+    updateToggleUI();
+
+    themeBtn.addEventListener('click', function(){
+      var next = currentTheme() === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      try{ localStorage.setItem('theme', next); }catch(e){}
+      updateToggleUI();
+    });
+
+    // If the person hasn't manually chosen a theme, keep following their
+    // system/browser setting live (e.g. switching at sunset).
+    if(window.matchMedia){
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e){
+        try{
+          if(!localStorage.getItem('theme')){
+            document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
+            updateToggleUI();
+          }
+        }catch(err){}
+      });
+    }
   })();
 </script>
 
