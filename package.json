@@ -1,0 +1,9 @@
+{
+  "name": "walk4god-give",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "stripe": "^16.0.0",
+    "twilio": "^5.0.0"
+  }
+}

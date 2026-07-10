@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Give — The Walk</title>
+<style>
+  :root{
+    --ink:#F1F3F6;
+    --paper:#06070a;
+    --line:rgba(255,255,255,0.15);
+    --muted:#9AA0AB;
+    --accent:#F1F3F6;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .wrap{
+    max-width:560px;
+    margin:0 auto;
+    padding:40px 24px 120px;
+  }
+  .back-link{
+    display:inline-block;
+    color:var(--muted);
+    text-decoration:none;
+    font-size:14px;
+    margin-bottom:24px;
+  }
+  .back-link:hover{ color:var(--ink); }
+  h1{
+    font-size:22px;
+    font-weight:700;
+    margin:0 0 32px;
+    color:var(--ink);
+  }
+  .field{ margin-bottom:32px; }
+  .field label{
+    display:block;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:10px;
+  }
+
+  /* segmented toggle */
+  .segmented{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .segmented button{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:16px 12px;
+    background:transparent;
+    color:var(--ink);
+    border:none;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+    font-family:inherit;
+  }
+  .segmented button.active{
+    background:var(--ink);
+    color:#06070a;
+  }
+  .segmented button:not(:last-child){ border-right:1px solid var(--line); }
+
+  /* frequency row (appears only when recurring) */
+  .freq-row{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .freq-row button{
+    flex:1;
+    padding:16px 8px;
+    background:transparent;
+    border:none;
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .freq-row button:not(:last-child){ border-right:1px solid var(--line); }
+  .freq-row button.active{ background:var(--ink); color:#06070a; }
+
+  .recurring-only{ display:none; }
+  .recurring-only.show{ display:block; }
+
+  input[type="date"], select{
+    width:100%;
+    padding:16px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    font-size:16px;
+    color:var(--ink);
+    background:transparent;
+    appearance:none;
+    -webkit-appearance:none;
+    font-family:inherit;
+  }
+  select option{ background:#0a0a0c; color:var(--ink); }
+
+  .amount-box{
+    position:relative;
+  }
+  .amount-box .dollar{
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:22px;
+    font-weight:700;
+    color:var(--muted);
+  }
+  .amount-box input{
+    width:100%;
+    padding:16px 16px 16px 34px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    font-size:22px;
+    font-weight:700;
+    color:var(--ink);
+    background:transparent;
+    font-family:inherit;
+  }
+  .amount-hint{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .amount-hint.error{ color:#e0665a; }
+
+  .quick-amounts{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+    flex-wrap:wrap;
+  }
+  .quick-amounts button{
+    padding:8px 16px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .quick-amounts button.active{ background:var(--ink); color:#06070a; border-color:var(--ink); }
+
+  .add-fund{
+    display:block;
+    margin:0 auto;
+    padding:14px 28px;
+    border-radius:999px;
+    border:1.5px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  .footer-bar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    background:var(--paper);
+    border-top:1px solid var(--line);
+    padding:16px 24px 24px;
+  }
+  .footer-inner{
+    max-width:560px;
+    margin:0 auto;
+  }
+  .next-btn{
+    width:100%;
+    padding:18px;
+    border-radius:999px;
+    border:none;
+    background:var(--ink);
+    color:#06070a;
+    font-size:17px;
+    font-weight:700;
+    cursor:pointer;
+    transition:opacity .15s ease;
+    font-family:inherit;
+  }
+  .next-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .status{
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+    margin-top:10px;
+    min-height:16px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="index.html" class="back-link">← Back to The Walk</a>
+    <h1>Support the walk</h1>
+
+    <div class="field">
+      <label>Gift type</label>
+      <div class="segmented" id="giftType">
+        <button type="button" class="active" data-value="one_time">Give one time</button>
+        <button type="button" data-value="recurring">Set up recurring</button>
+      </div>
+    </div>
+
+    <div class="field recurring-only" id="freqField">
+      <label>Frequency</label>
+      <div class="freq-row" id="freqRow">
+        <button type="button" class="active" data-value="week">Every week</button>
+        <button type="button" data-value="month">Every month</button>
+      </div>
+    </div>
+
+    <div class="field recurring-only" id="startField">
+      <label>Starting</label>
+      <input type="date" id="startDate">
+    </div>
+
+    <div class="field">
+      <label>Giving Type</label>
+      <select id="fund">
+        <option value="general">General Fund</option>
+        <option value="gear">Gear for the Road</option>
+        <option value="events">Walk Events</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Amount</label>
+      <div class="amount-box">
+        <span class="dollar">$</span>
+        <input type="number" id="amount" min="1" step="1" placeholder="0" inputmode="decimal">
+      </div>
+      <div class="amount-hint" id="amountHint">$1 minimum</div>
+      <div class="quick-amounts" id="quickAmounts">
+        <button type="button" data-value="10">$10</button>
+        <button type="button" data-value="25">$25</button>
+        <button type="button" data-value="50">$50</button>
+        <button type="button" data-value="100">$100</button>
+      </div>
+    </div>
+
+    <button type="button" class="add-fund">+ Add another fund</button>
+  </div>
+
+  <div class="footer-bar">
+    <div class="footer-inner">
+      <button type="button" class="next-btn" id="nextBtn" disabled>Next</button>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var giftType = 'one_time';
+  var frequency = 'week';
+  var amountInput = document.getElementById('amount');
+  var nextBtn = document.getElementById('nextBtn');
+  var hint = document.getElementById('amountHint');
+  var status = document.getElementById('status');
+  var startDate = document.getElementById('startDate');
+
+  var todayStr = new Date().toISOString().split('T')[0];
+  startDate.value = todayStr;
+  startDate.min = todayStr;
+
+  // gift type toggle
+  document.getElementById('giftType').addEventListener('click', function(e){
+    var btn = e.target.closest('button');
+    if(!btn) return;
+    giftType = btn.dataset.value;
+    this.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    document.querySelectorAll('.recurring-only').forEach(function(el){
+      el.classList.toggle('show', giftType === 'recurring');
+    });
+  });
+
+  // frequency toggle
+  document.getElementById('freqRow').addEventListener('click', function(e){
+    var btn = e.target.closest('button');
+    if(!btn) return;
+    frequency = btn.dataset.value;
+    this.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+  });
+
+  // quick amount buttons
+  document.getElementById('quickAmounts').addEventListener('click', function(e){
+    var btn = e.target.closest('button');
+    if(!btn) return;
+    amountInput.value = btn.dataset.value;
+    this.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    validate();
+  });
+
+  amountInput.addEventListener('input', function(){
+    document.querySelectorAll('#quickAmounts button').forEach(function(b){ b.classList.remove('active'); });
+    validate();
+  });
+
+  function validate(){
+    var val = parseFloat(amountInput.value);
+    if(!val || val < 1 || isNaN(val)){
+      hint.textContent = '$1 minimum';
+      hint.classList.add('error');
+      nextBtn.disabled = true;
+      return false;
+    }
+    hint.textContent = '$1 minimum';
+    hint.classList.remove('error');
+    nextBtn.disabled = false;
+    return true;
+  }
+
+  nextBtn.addEventListener('click', function(){
+    if(!validate()) return;
+
+    var payload = {
+      giftType: giftType,
+      frequency: giftType === 'recurring' ? frequency : null,
+      startDate: giftType === 'recurring' ? startDate.value : null,
+      fund: document.getElementById('fund').value,
+      amount: Math.round(parseFloat(amountInput.value) * 100) // cents
+    };
+
+    // Save the gift details so the verification pages can pick them
+    // back up once the phone number is confirmed.
+    sessionStorage.setItem('pendingGift', JSON.stringify(payload));
+    window.location.href = 'verify-phone.html';
+  });
+})();
+</script>
+</body>
+</html>

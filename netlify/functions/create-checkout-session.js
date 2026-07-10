@@ -1,0 +1,102 @@
+// netlify/functions/create-checkout-session.js
+//
+// This runs on Netlify's servers, never in the browser.
+// Your Stripe SECRET key lives only in Netlify's environment variables
+// (set in Site settings -> Environment variables -> STRIPE_SECRET_KEY),
+// never in this file and never in the frontend.
+
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Map your "Giving Type" dropdown values to human-readable labels
+const FUND_LABELS = {
+  general: 'General Fund',
+  gear: 'Gear for the Road',
+  events: 'Walk Events',
+};
+
+exports.handler = async function (event) {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
+
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { giftType, frequency, fund, amount } = body;
+
+    // ---- Server-side validation (never trust the client) ----
+    const amountCents = parseInt(amount, 10);
+    if (!Number.isFinite(amountCents) || amountCents < 100) {
+      // 100 cents = $1 minimum
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Minimum gift amount is $1.' }),
+      };
+    }
+
+    const fundLabel = FUND_LABELS[fund] || 'General Fund';
+
+    const siteUrl = process.env.SITE_URL || 'https://YOUR-SITE-URL-HERE';
+
+    let session;
+
+    if (giftType === 'recurring') {
+      if (frequency !== 'week' && frequency !== 'month') {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Unsupported frequency.' }),
+        };
+      }
+
+      // Stripe requires a Price object for subscriptions.
+      // We create one on the fly with the custom amount, tied to
+      // a recurring interval matching the chosen frequency.
+      const price = await stripe.prices.create({
+        currency: 'usd',
+        unit_amount: amountCents,
+        recurring: { interval: frequency }, // 'week' or 'month'
+        product_data: {
+          name: `Recurring Gift — ${fundLabel}`,
+        },
+      });
+
+      session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        line_items: [{ price: price.id, quantity: 1 }],
+        success_url: `${siteUrl}/give-success.html?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${siteUrl}/give.html`,
+        metadata: { fund, giftType, frequency },
+      });
+    } else {
+      // One-time gift
+      session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              unit_amount: amountCents,
+              product_data: {
+                name: `One-Time Gift — ${fundLabel}`,
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${siteUrl}/give-success.html?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${siteUrl}/give.html`,
+        metadata: { fund, giftType },
+      });
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ url: session.url }),
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Unable to start checkout. Please try again.' }),
+    };
+  }
+};
