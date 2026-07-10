@@ -20,6 +20,7 @@
     --line:rgba(255,255,255,0.15);
     --muted:#9AA0AB;
     --glow-rgb:255,255,255;
+    --on-ink:#06070a;
   }
   :root[data-theme="light"]{
     --ink:#0A0B0E;
@@ -27,6 +28,7 @@
     --line:rgba(10,11,14,0.15);
     --muted:#5A5F68;
     --glow-rgb:10,11,14;
+    --on-ink:#F1F3F6;
   }
   *{ box-sizing:border-box; }
   body{
@@ -131,7 +133,7 @@
     border-radius:999px;
     border:none;
     background:var(--ink);
-    color:#06070a;
+    color:var(--on-ink);
     font-size:17px;
     font-weight:700;
     cursor:pointer;
