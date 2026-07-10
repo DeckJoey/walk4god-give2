@@ -24,14 +24,19 @@ exports.handler = async function (event) {
     const { giftType, frequency, fund, amount } = body;
 
     // ---- Server-side validation (never trust the client) ----
-    const amountCents = parseInt(amount, 10);
-    if (!Number.isFinite(amountCents) || amountCents < 100) {
+    const desiredCents = parseInt(amount, 10);
+    if (!Number.isFinite(desiredCents) || desiredCents < 100) {
       // 100 cents = $1 minimum
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Minimum gift amount is $1.' }),
       };
     }
+
+    // Gross up so the ministry nets the full amount the donor intended,
+    // after Stripe's US card fee of 2.9% + $0.30.
+    // total = (desired + 30) / (1 - 0.029), everything in cents.
+    const amountCents = Math.round((desiredCents + 30) / (1 - 0.029));
 
     const fundLabel = FUND_LABELS[fund] || 'General Fund';
 
@@ -55,7 +60,7 @@ exports.handler = async function (event) {
         unit_amount: amountCents,
         recurring: { interval: frequency }, // 'week' or 'month'
         product_data: {
-          name: `Recurring Gift — ${fundLabel}`,
+          name: `Recurring Gift — ${fundLabel} (includes processing fee)`,
         },
       });
 
@@ -76,7 +81,7 @@ exports.handler = async function (event) {
               currency: 'usd',
               unit_amount: amountCents,
               product_data: {
-                name: `One-Time Gift — ${fundLabel}`,
+                name: `One-Time Gift — ${fundLabel} (includes processing fee)`,
               },
             },
             quantity: 1,
