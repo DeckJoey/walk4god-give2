@@ -293,6 +293,7 @@
         <input type="number" id="amount" min="1" step="1" placeholder="0" inputmode="decimal">
       </div>
       <div class="amount-hint" id="amountHint">$1 minimum</div>
+      <div class="amount-hint" id="feeNote" style="margin-top:2px;"></div>
       <div class="quick-amounts" id="quickAmounts">
         <button type="button" data-value="10">$10</button>
         <button type="button" data-value="25">$25</button>
@@ -360,15 +361,19 @@
 
   function validate(){
     var val = parseFloat(amountInput.value);
+    var feeNote = document.getElementById('feeNote');
     if(!val || val < 1 || isNaN(val)){
       hint.textContent = '$1 minimum';
       hint.classList.add('error');
       nextBtn.disabled = true;
+      feeNote.textContent = '';
       return false;
     }
     hint.textContent = '$1 minimum';
     hint.classList.remove('error');
     nextBtn.disabled = false;
+    var total = (val + 0.30) / (1 - 0.029);
+    feeNote.textContent = 'Total charged: $' + total.toFixed(2) + ' (includes processing fee so 100% of your $' + val.toFixed(2) + ' goes to the ministry)';
     return true;
   }
 
@@ -380,7 +385,7 @@
       frequency: giftType === 'recurring' ? frequency : null,
       startDate: giftType === 'recurring' ? startDate.value : null,
       fund: document.getElementById('fund').value,
-      amount: Math.round(parseFloat(amountInput.value) * 100) // cents
+      amount: Math.round(parseFloat(amountInput.value) * 100) // cents, before fee gross-up (server adds the fee)
     };
 
     // Save the gift details so the verification pages can pick them
