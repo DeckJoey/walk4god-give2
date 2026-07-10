@@ -201,7 +201,14 @@
     border:1px solid rgba(var(--glow-rgb),0.28);
     border-radius:8px;
     cursor:pointer;
+    position:fixed;
+    top:24px;
+    right:28px;
     z-index:60;
+    transition:right .32s cubic-bezier(.4,0,.2,1);
+  }
+  .nav-toggle.open{
+    right:calc(min(300px,80vw) - 66px);
   }
   .nav-toggle span{
     display:block; width:20px; height:2px;
@@ -236,13 +243,16 @@
   }
 
   .theme-toggle-btn{
-    margin-bottom:8px;
+    position:fixed;
+    top:24px;
+    left:calc(100vw - min(300px,80vw) + 20px);
     width:40px; height:40px;
     display:flex; align-items:center; justify-content:center;
     border-radius:50%;
     background:transparent; border:1.5px solid rgba(var(--glow-rgb),0.3);
     color:var(--ink);
     cursor:pointer; transition:background .2s ease, border-color .2s ease;
+    z-index:60;
   }
   .theme-toggle-btn:hover{ background:rgba(var(--glow-rgb),0.08); }
 
