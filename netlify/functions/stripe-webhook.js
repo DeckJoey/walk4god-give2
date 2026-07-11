@@ -64,13 +64,11 @@ function thankYouEmailHtml({ name, siteUrl }) {
       <div style="text-align:center;margin-bottom:28px;">
         <img src="${siteUrl}/logo-email.png" alt="The Walk" style="height:40px;width:auto;">
       </div>
-      <h2 style="margin:0 0 20px;font-size:22px;">Thank you for giving 🙏</h2>
+      <h2 style="margin:0 0 20px;font-size:22px;">Thank you for walking with us 🙏</h2>
       <p>Hey ${name || 'friend'},</p>
-      <p>Thank you for planting a seed of faith! We're so grateful for your generosity — it helps us keep sharing the hope of Jesus and walking alongside people who need a community to walk with.</p>
-      <p>We know no single gift changes everything on its own, but together, step by step, we believe God brings the increase.</p>
-      <p>As you keep walking with us, we'd love for you to invite the people in your life to walk along too. Together we're stronger.</p>
-      <p>We're praying you experience the peace and presence of God in a real way this season. The best is still ahead.</p>
-      <p style="margin-top:24px;">All for Jesus,<br><strong>The Walk Team</strong></p>
+      <p>We just wanted to take a second and say thank you. Your gift isn't just a transaction to us — it's you choosing to be part of what The Walk is doing, and that means a lot.</p>
+      <p>Every dollar you give goes toward keeping this community going: the podcast, the gatherings, and the everyday work of pointing people back to Jesus. You're not just supporting a project — you're helping someone else find people to walk this road with.</p>
+      <p style="margin-top:24px;">Grateful for you,<br><strong>The Walk Team</strong></p>
     </div>
   </div>`;
 }
