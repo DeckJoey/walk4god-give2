@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Other Trails Worth Following — The Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+(function(){
+  try{
+    var saved = localStorage.getItem('theme');
+    var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --bg:#0b0c0e;
+    --bg-alt:#141618;
+    --ink:#F3F1EC;
+    --ink-dim:#9B9690;
+    --brass:#C7A455;
+    --brass-dim:rgba(199,164,85,0.35);
+    --sage:#6C8570;
+    --card: rgba(255,255,255,0.03);
+    --card-line: rgba(199,164,85,0.18);
+    --glow-rgb: 199,164,85;
+  }
+  :root[data-theme="light"]{
+    --bg:#F3EFE6;
+    --bg-alt:#FBF9F4;
+    --ink:#211D17;
+    --ink-dim:#6B6459;
+    --brass:#9C7A2E;
+    --brass-dim:rgba(156,122,46,0.3);
+    --sage:#4F6753;
+    --card: rgba(33,29,23,0.035);
+    --card-line: rgba(156,122,46,0.22);
+    --glow-rgb: 156,122,46;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 700px 400px at 15% -6%, rgba(var(--glow-rgb),0.12), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  .theme-toggle-btn{
+    position:fixed; top:22px; right:22px; z-index:60;
+    width:38px; height:38px; border-radius:50%;
+    background:var(--bg-alt); border:1.5px solid var(--card-line);
+    color:var(--ink); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,0.25);
+  }
+  .theme-toggle-btn:hover{ background:rgba(var(--glow-rgb),0.1); }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:64px 24px 120px; position:relative; z-index:1; }
+
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px;
+    color:var(--ink-dim); text-decoration:none; font-size:13.5px;
+    font-family:'JetBrains Mono', monospace; letter-spacing:0.03em;
+    margin-bottom:48px; transition:color .2s ease;
+  }
+  .back-link:hover{ color:var(--brass); }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--brass); margin-bottom:18px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{ content:''; width:28px; height:1px; background:var(--brass-dim); }
+
+  h1{
+    font-family:'Fraunces', serif; font-weight:600; font-size:clamp(34px,5.5vw,52px);
+    line-height:1.05; letter-spacing:-0.01em; margin:0 0 22px; max-width:14ch;
+  }
+  h1 em{ font-style:italic; font-weight:500; color:var(--sage); }
+
+  .intro{ color:var(--ink-dim); font-size:16.5px; max-width:52ch; margin:0 0 40px; }
+
+  .waysign-trigger{
+    display:flex; align-items:center; gap:14px;
+    background:var(--card); border:1.5px solid var(--card-line); border-radius:12px;
+    cursor:pointer; margin-bottom:72px; padding:18px 22px; text-align:left;
+    width:100%; transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .waysign-trigger:hover{ border-color:var(--brass); box-shadow:0 0 20px rgba(var(--glow-rgb),0.14); }
+  .waysign-icon{
+    width:44px; height:44px; border-radius:50%; border:1.5px solid var(--brass);
+    color:var(--brass); font-family:'Fraunces',serif; font-weight:600; font-size:18px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    transition:background .2s ease, transform .2s ease;
+  }
+  .waysign-trigger:hover .waysign-icon{ background:rgba(var(--glow-rgb),0.1); transform:scale(1.06); }
+  .waysign-label{ font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--ink-dim); letter-spacing:0.03em; }
+  .waysign-label strong{ color:var(--brass); display:block; font-size:13px; margin-bottom:2px; letter-spacing:0.06em; text-transform:uppercase; }
+
+  /* Disclaimer modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    z-index:200; opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-box{
+    position:relative; max-width:440px; width:100%;
+    background:var(--bg-alt); border:1.5px solid var(--brass); border-radius:14px;
+    padding:36px 30px; text-align:center;
+    transform:translateY(18px) scale(0.96); transition:transform .3s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 24px 70px rgba(0,0,0,0.45);
+  }
+  .modal-overlay.open .modal-box{ transform:translateY(0) scale(1); }
+  .modal-icon{
+    width:46px; height:46px; border-radius:50%; border:1.5px solid var(--brass);
+    color:var(--brass); font-family:'Fraunces',serif; font-weight:600; font-size:19px;
+    display:flex; align-items:center; justify-content:center; margin:0 auto 18px;
+  }
+  .modal-box h3{ font-family:'Fraunces', serif; font-weight:600; font-size:20px; margin:0 0 14px; }
+  .modal-box p{ color:var(--ink-dim); font-size:14px; line-height:1.6; margin:0; }
+  .modal-close{
+    position:absolute; top:14px; right:14px; width:30px; height:30px; border-radius:50%;
+    border:1px solid var(--card-line); background:transparent; color:var(--ink-dim);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:background .2s ease, color .2s ease;
+  }
+  .modal-close:hover{ background:rgba(var(--glow-rgb),0.1); color:var(--ink); }
+
+  /* Trail */
+  .trail-wrap{ position:relative; }
+  .trail-line{
+    position:absolute; left:29px; top:14px; bottom:14px; width:2px;
+    background:repeating-linear-gradient(to bottom, var(--sage) 0 8px, transparent 8px 16px);
+    opacity:0.55;
+  }
+  @media (max-width:600px){ .trail-line{ left:23px; } }
+
+  .waypoint{
+    position:relative; padding-left:74px; margin-bottom:56px;
+  }
+  @media (max-width:600px){ .waypoint{ padding-left:58px; } }
+  .waypoint:last-child{ margin-bottom:0; }
+
+  .waypoint-num{
+    position:absolute; left:0; top:0; width:60px; height:60px;
+    border-radius:50%; background:var(--bg-alt); border:1.5px solid var(--brass);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--brass);
+    z-index:1; box-shadow:0 0 0 6px var(--bg);
+  }
+  @media (max-width:600px){ .waypoint-num{ width:46px; height:46px; font-size:11px; } }
+
+  .waypoint-card{
+    background:var(--card); border:1px solid var(--card-line); border-radius:14px;
+    padding:26px 28px; transition:border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+  }
+  .waypoint-card:hover{
+    border-color:var(--brass); transform:translateX(4px);
+    box-shadow:0 0 28px rgba(var(--glow-rgb),0.16);
+  }
+
+  .waypoint-head{ display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+  .waypoint-logo{
+    width:52px; height:52px; border-radius:10px; flex-shrink:0;
+    background:var(--bg-alt); border:1px solid var(--card-line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:600; font-size:18px; color:var(--ink);
+    overflow:hidden;
+  }
+  .waypoint-logo img{ width:100%; height:100%; object-fit:contain; padding:6px; }
+  .waypoint-title h3{ margin:0; font-family:'Fraunces', serif; font-weight:600; font-size:19px; }
+  .waypoint-title span{ font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--sage); letter-spacing:0.04em; text-transform:uppercase; }
+
+  .waypoint-card p{ color:var(--ink-dim); font-size:14px; margin:0 0 18px; }
+
+  .waypoint-link{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; letter-spacing:0.03em;
+    color:var(--brass); text-decoration:none; text-transform:uppercase;
+    border-bottom:1px solid var(--brass-dim); padding-bottom:2px;
+    transition:border-color .2s ease, gap .2s ease;
+  }
+  .waypoint-link:hover{ gap:12px; border-color:var(--brass); }
+
+  .end-marker{
+    margin-top:56px; text-align:center; color:var(--ink-dim);
+    font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.08em;
+    text-transform:uppercase; opacity:0.7;
+  }
+</style>
+</head>
+<body>
+
+<button type="button" class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle light/dark mode">
+  <svg id="themeIconMoon" viewBox="0 0 24 24" width="17" height="17"><path fill="currentColor" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg id="themeIconSun" viewBox="0 0 24 24" width="17" height="17" style="display:none"><path fill="currentColor" d="M12 4.5a1 1 0 0 1-1-1V2a1 1 0 0 1 2 0v1.5a1 1 0 0 1-1 1zm0 15a1 1 0 0 1 1 1V22a1 1 0 0 1-2 0v-1.5a1 1 0 0 1 1-1zm7.5-7.5a1 1 0 0 1 1-1H22a1 1 0 0 1 0 2h-1.5a1 1 0 0 1-1-1zm-15 0a1 1 0 0 1 1 1v0a1 1 0 0 1-2 0v0a1 1 0 0 1 1-1zM18.36 5.64a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 1 1-1.42-1.42zM6.34 17.66a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 1 1-1.42-1.42zM18.36 18.36a1 1 0 0 1-1.42 1.42l-1.06-1.06a1 1 0 1 1 1.42-1.42zM6.34 6.34A1 1 0 0 1 4.92 4.92L6 6a1 1 0 1 1-1.42 1.42zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/></svg>
+</button>
+
+<div class="wrap">
+  <a href="index.html" class="back-link">← BACK TO THE WALK</a>
+
+  <div class="eyebrow">Off the beaten path</div>
+  <h1>Other trails <em>worth</em> following.</h1>
+  <p class="intro">The Walk is one road among many. These are ministries we personally believe in — organizations already deep into good work, worth supporting directly.</p>
+
+  <button type="button" class="waysign-trigger" id="waysignTrigger">
+    <span class="waysign-icon">!</span>
+    <span class="waysign-label"><strong>Before you head out</strong>These gifts go directly to each ministry, not The Walk — click for more information</span>
+  </button>
+
+  <div class="modal-overlay" id="waysignModal">
+    <div class="modal-box">
+      <button type="button" class="modal-close" id="waysignClose" aria-label="Close">✕</button>
+      <div class="modal-icon">!</div>
+      <h3>Just so you know</h3>
+      <p>Every gift below goes straight to the organization you choose — none of it passes through or comes back to The Walk. We're just pointing the way.</p>
+    </div>
+  </div>
+
+  <div class="trail-wrap">
+    <div class="trail-line"></div>
+
+    <div class="waypoint">
+      <div class="waypoint-num">01</div>
+      <div class="waypoint-card">
+        <div class="waypoint-head">
+          <div class="waypoint-logo">STL</div>
+          <div class="waypoint-title">
+            <h3>Speed the Light</h3>
+            <span>Missions &amp; Equipment</span>
+          </div>
+        </div>
+        <p>Provides vehicles, equipment, and technology that help missionaries and national workers reach the world faster with the Gospel.</p>
+        <a href="https://www.speedthelight.org/" target="_blank" rel="noopener" class="waypoint-link">Visit their site →</a>
+      </div>
+    </div>
+
+    <div class="waypoint">
+      <div class="waypoint-num">02</div>
+      <div class="waypoint-card">
+        <div class="waypoint-head">
+          <div class="waypoint-logo">SP</div>
+          <div class="waypoint-title">
+            <h3>Samaritan's Purse</h3>
+            <span>Relief &amp; Crisis Response</span>
+          </div>
+        </div>
+        <p>Meets the needs of people in physical and spiritual crisis through emergency relief and community development around the world.</p>
+        <a href="https://www.samaritanspurse.org/" target="_blank" rel="noopener" class="waypoint-link">Visit their site →</a>
+      </div>
+    </div>
+
+    <div class="waypoint">
+      <div class="waypoint-num">03</div>
+      <div class="waypoint-card">
+        <div class="waypoint-head">
+          <div class="waypoint-logo">CI</div>
+          <div class="waypoint-title">
+            <h3>Compassion International</h3>
+            <span>Child Development</span>
+          </div>
+        </div>
+        <p>Partners with local churches to release children from poverty in Jesus' name, one child at a time.</p>
+        <a href="https://www.compassion.com/" target="_blank" rel="noopener" class="waypoint-link">Visit their site →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="end-marker">— end of trail —</div>
+</div>
+
+<script>
+(function(){
+  var themeBtn = document.getElementById('themeToggleBtn');
+  var iconMoon = document.getElementById('themeIconMoon');
+  var iconSun = document.getElementById('themeIconSun');
+
+  function currentTheme(){ return document.documentElement.getAttribute('data-theme') || 'dark'; }
+  function updateToggleUI(){
+    if(currentTheme() === 'light'){ iconMoon.style.display='none'; iconSun.style.display=''; }
+    else { iconMoon.style.display=''; iconSun.style.display='none'; }
+  }
+  updateToggleUI();
+  themeBtn.addEventListener('click', function(){
+    var next = currentTheme() === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('theme', next); }catch(e){}
+    updateToggleUI();
+  });
+  if(window.matchMedia){
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e){
+      try{
+        if(!localStorage.getItem('theme')){
+          document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
+          updateToggleUI();
+        }
+      }catch(err){}
+    });
+  }
+
+  /* ---------- Waysign disclaimer modal ---------- */
+  var waysignTrigger = document.getElementById('waysignTrigger');
+  var waysignModal = document.getElementById('waysignModal');
+  var waysignClose = document.getElementById('waysignClose');
+
+  function openWaysign(){ waysignModal.classList.add('open'); }
+  function closeWaysign(){ waysignModal.classList.remove('open'); }
+
+  waysignTrigger.addEventListener('click', openWaysign);
+  waysignClose.addEventListener('click', closeWaysign);
+  waysignModal.addEventListener('click', function(e){
+    if(e.target === waysignModal){ closeWaysign(); }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ closeWaysign(); }
+  });
+})();
+</script>
+</body>
+</html>
