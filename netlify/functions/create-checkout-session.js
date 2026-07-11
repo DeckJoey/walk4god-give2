@@ -66,6 +66,7 @@ exports.handler = async function (event) {
 
       session = await stripe.checkout.sessions.create({
         mode: 'subscription',
+        customer_email: undefined,
         line_items: [{ price: price.id, quantity: 1 }],
         success_url: `${siteUrl}/give-success.html?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${siteUrl}/give.html`,
@@ -75,6 +76,7 @@ exports.handler = async function (event) {
       // One-time gift
       session = await stripe.checkout.sessions.create({
         mode: 'payment',
+        customer_creation: 'always',
         line_items: [
           {
             price_data: {
