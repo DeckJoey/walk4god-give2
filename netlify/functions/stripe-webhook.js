@@ -37,32 +37,41 @@ async function sendEmail({ to, subject, html }) {
   }
 }
 
-function receiptEmailHtml({ name, amount, fundLabel, date, transactionId }) {
+function receiptEmailHtml({ name, amount, fundLabel, date, transactionId, siteUrl }) {
   return `
-  <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;background:#06070a;color:#F1F3F6;padding:32px;">
-    <h2 style="margin:0 0 20px;">The Walk</h2>
-    <p>Hi ${name || 'friend'},</p>
-    <p>On <strong>${date}</strong> your gift to <strong>The Walk</strong> was made successfully.</p>
-    <table style="width:100%;border-collapse:collapse;margin:20px 0;">
-      <tr><td style="padding:8px 0;color:#9AA0AB;">Gift amount</td><td style="padding:8px 0;text-align:right;">$${amount}</td></tr>
-      <tr><td style="padding:8px 0;color:#9AA0AB;">Giving type</td><td style="padding:8px 0;text-align:right;">${fundLabel}</td></tr>
-      <tr><td style="padding:8px 0;color:#9AA0AB;">Transaction No.</td><td style="padding:8px 0;text-align:right;">${transactionId}</td></tr>
-    </table>
-    <p style="font-size:12px;color:#9AA0AB;">No goods or services were provided in exchange for this contribution other than intangible religious benefits. Please keep this email for your tax records.</p>
-    <p style="font-size:12px;color:#9AA0AB;">The Walk</p>
+  <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;background:#f5f5f3;color:#161616;padding:40px 20px;">
+    <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:36px;border:1px solid #e6e6e4;">
+      <div style="text-align:center;margin-bottom:28px;">
+        <img src="${siteUrl}/logo-email.png" alt="The Walk" style="height:40px;width:auto;">
+      </div>
+      <p>Hi ${name || 'friend'},</p>
+      <p>On <strong>${date}</strong> your gift to <strong>The Walk</strong> was made successfully.</p>
+      <table style="width:100%;border-collapse:collapse;margin:24px 0;">
+        <tr><td style="padding:10px 0;color:#767a82;border-bottom:1px solid #eee;">Gift amount</td><td style="padding:10px 0;text-align:right;border-bottom:1px solid #eee;">$${amount}</td></tr>
+        <tr><td style="padding:10px 0;color:#767a82;border-bottom:1px solid #eee;">Giving type</td><td style="padding:10px 0;text-align:right;border-bottom:1px solid #eee;">${fundLabel}</td></tr>
+        <tr><td style="padding:10px 0;color:#767a82;">Transaction No.</td><td style="padding:10px 0;text-align:right;">${transactionId}</td></tr>
+      </table>
+      <p style="font-size:12px;color:#767a82;">No goods or services were provided in exchange for this contribution other than intangible religious benefits. Please keep this email for your tax records.</p>
+      <p style="font-size:12px;color:#767a82;margin-top:24px;">The Walk</p>
+    </div>
   </div>`;
 }
 
-function thankYouEmailHtml({ name }) {
+function thankYouEmailHtml({ name, siteUrl }) {
   return `
-  <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;background:#06070a;color:#F1F3F6;padding:32px;">
-    <h2 style="margin:0 0 20px;">Thank you for giving 🙏</h2>
-    <p>Hey ${name || 'friend'},</p>
-    <p>Thank you for planting a seed of faith! We're so grateful for your generosity — it helps us keep sharing the hope of Jesus and walking alongside people who need a community to walk with.</p>
-    <p>We know no single gift changes everything on its own, but together, step by step, we believe God brings the increase.</p>
-    <p>As you keep walking with us, we'd love for you to invite the people in your life to walk along too. Together we're stronger.</p>
-    <p>We're praying you experience the peace and presence of God in a real way this season. The best is still ahead.</p>
-    <p>All for Jesus,<br><strong>The Walk Team</strong></p>
+  <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;background:#f5f5f3;color:#161616;padding:40px 20px;">
+    <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:36px;border:1px solid #e6e6e4;">
+      <div style="text-align:center;margin-bottom:28px;">
+        <img src="${siteUrl}/logo-email.png" alt="The Walk" style="height:40px;width:auto;">
+      </div>
+      <h2 style="margin:0 0 20px;font-size:22px;">Thank you for giving 🙏</h2>
+      <p>Hey ${name || 'friend'},</p>
+      <p>Thank you for planting a seed of faith! We're so grateful for your generosity — it helps us keep sharing the hope of Jesus and walking alongside people who need a community to walk with.</p>
+      <p>We know no single gift changes everything on its own, but together, step by step, we believe God brings the increase.</p>
+      <p>As you keep walking with us, we'd love for you to invite the people in your life to walk along too. Together we're stronger.</p>
+      <p>We're praying you experience the peace and presence of God in a real way this season. The best is still ahead.</p>
+      <p style="margin-top:24px;">All for Jesus,<br><strong>The Walk Team</strong></p>
+    </div>
   </div>`;
 }
 
@@ -99,18 +108,20 @@ exports.handler = async function (event) {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
       });
 
+      const siteUrl = process.env.SITE_URL || 'https://thewalk4god.com';
+
       if (email) {
         // Two separate emails, sent back to back
         await sendEmail({
           to: email,
           subject: 'Your Giving Receipt — The Walk',
-          html: receiptEmailHtml({ name, amount, fundLabel, date, transactionId: session.id }),
+          html: receiptEmailHtml({ name, amount, fundLabel, date, transactionId: session.id, siteUrl }),
         });
 
         await sendEmail({
           to: email,
           subject: 'Thank You for Giving!',
-          html: thankYouEmailHtml({ name }),
+          html: thankYouEmailHtml({ name, siteUrl }),
         });
       } else {
         console.warn('No email found on session, skipping emails.');
