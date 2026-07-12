@@ -14,6 +14,25 @@
 </script>
 <title>The Walk | Walk 4 God Podcast</title>
 <meta name="description" content="The Walk is a community walking together in faith. Home of the Walk 4 God podcast.">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico">
+
+<!-- Open Graph / Social preview -->
+<meta property="og:title" content="The Walk | Walk 4 God Podcast">
+<meta property="og:description" content="We weren't made to walk alone. The Walk is a community walking together in faith — home of the Walk 4 God podcast.">
+<meta property="og:image" content="https://thewalk4god.com/og-image.png">
+<meta property="og:url" content="https://thewalk4god.com">
+<meta property="og:type" content="website">
+
+<!-- Twitter card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Walk | Walk 4 God Podcast">
+<meta name="twitter:description" content="We weren't made to walk alone. The Walk is a community walking together in faith.">
+<meta name="twitter:image" content="https://thewalk4god.com/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -108,9 +127,13 @@
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
   .waypoint::after{ content:none; }
-  .waypoint-icon{ width:40px; height:auto; position:relative; z-index:1; filter:drop-shadow(0 0 3px rgba(0,0,0,0.4)); }
+  .waypoint-icon{ width:40px; height:auto; position:relative; z-index:1; filter:drop-shadow(0 0 3px rgba(0,0,0,0.4)); animation:iconPulse 3.2s ease-in-out infinite; }
+  @keyframes iconPulse{
+    0%,100%{ filter:drop-shadow(0 0 3px rgba(0,0,0,0.4)) drop-shadow(0 0 0 rgba(var(--glow-rgb),0)); }
+    50%{ filter:drop-shadow(0 0 3px rgba(0,0,0,0.4)) drop-shadow(0 0 10px rgba(var(--glow-rgb),0.75)); }
+  }
 
-  h1,h2,h3{ font-family:var(--display); font-weight:600; line-height:1.08; letter-spacing:-0.01em; }
+  h1,h2,h3{ font-family:var(--display); font-weight:600; line-height:1.08; letter-spacing:-0.01em; text-shadow:0 4px 24px rgba(0,0,0,0.35), 0 1px 0 rgba(var(--glow-rgb),0.08); }
 
   .btn{
     display:inline-flex; align-items:center; gap:10px;
@@ -406,7 +429,7 @@
   .social-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
   @media (max-width:640px){
     .social-grid{ grid-template-columns:1fr; gap:14px; }
-    .social-card{ padding:24px 20px; }
+    .social-card{ padding:24px 20px; margin:0 32px; }
   }
 
   .social-card{
@@ -507,6 +530,19 @@
 
   .give-actions{ display:flex; flex-direction:column; gap:12px; }
   .give-actions .btn{ justify-content:center; }
+
+  .other-ministries-connector{
+    width:2px; height:36px; margin:0 auto;
+    background:repeating-linear-gradient(to bottom, rgba(var(--glow-rgb),0.4) 0 6px, transparent 6px 12px);
+  }
+  .other-ministries-box{
+    max-width:420px; margin:0 auto; text-align:center;
+    padding:22px 24px; border:1px dashed var(--card-line); border-radius:14px;
+    background:transparent;
+  }
+  .other-ministries-label{ font-size:13.5px; color:var(--ink-dim); margin:0 0 14px; }
+  .other-ministries-box .btn{ width:100%; justify-content:center; }
+  .other-ministries-note{ font-size:12px; color:var(--ink-dim); margin:14px 0 0; opacity:0.75; }
   .give-note{ font-size:12.5px; color:#767a82; text-align:center; }
 
   /* ---------- merch teaser ---------- */
@@ -625,8 +661,18 @@
     transition:opacity .3s ease;
     transform:translate(-50%,-50%);
   }
-  .foot-cursor img{ width:100%; height:100%; filter:drop-shadow(0 0 4px rgba(0,0,0,0.5)); }
+  .foot-cursor img{ width:100%; height:100%; filter:drop-shadow(0 0 4px rgba(0,0,0,0.5)); transition:filter .15s ease; }
+  .foot-cursor.clicking img{
+    filter:
+      drop-shadow(0 0 4px rgba(0,0,0,0.5))
+      drop-shadow(0 0 10px rgba(var(--glow-rgb),0.9))
+      drop-shadow(0 0 22px rgba(var(--glow-rgb),0.7));
+  }
+  .foot-cursor.clicking{ transform-origin:center; }
   @media (hover:none){ .foot-cursor{ display:none; } }
+  @media (hover:hover){
+    *{ cursor:none !important; }
+  }
 
   /* ===== Floating bob animation ===== */
   .bob{ animation:bobFloat 4.5s ease-in-out infinite; }
@@ -692,6 +738,8 @@
 </style>
 </head>
 <body>
+
+
 
 <header>
   <nav class="wrap">
@@ -974,9 +1022,16 @@
       </div>
       <div class="give-actions">
         <a href="give.html" class="btn btn-primary">Support the Walk</a>
-        <button type="button" class="btn btn-ghost" id="otherMinistriesBtn">Give to Other Ministries</button>
         <p class="give-note">Secure giving powered by Stripe</p>
       </div>
+    </div>
+
+    <div class="other-ministries-connector" aria-hidden="true"></div>
+
+    <div class="other-ministries-box">
+      <p class="other-ministries-label">Looking to support a different cause?</p>
+      <button type="button" class="btn btn-ghost" id="otherMinistriesBtn">Give to Other Ministries</button>
+      <p class="other-ministries-note">These gifts go directly to the organization you choose, not to The Walk.</p>
     </div>
   </section>
 
@@ -1106,6 +1161,8 @@
       lastX = e.clientX; lastY = e.clientY;
     });
     document.addEventListener('mouseleave', function(){ cursor.style.opacity = '0'; });
+    document.addEventListener('mousedown', function(){ cursor.classList.add('clicking'); });
+    document.addEventListener('mouseup', function(){ cursor.classList.remove('clicking'); });
   }
 
   /* ---------- Back to top ---------- */
