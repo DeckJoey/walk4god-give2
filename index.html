@@ -404,7 +404,16 @@
   /* ---------- socials ---------- */
 
   .social-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-  @media (max-width:760px){ .social-grid{ grid-template-columns:1fr; } }
+  @media (max-width:640px){
+    .social-grid{ gap:8px; }
+    .social-card{ padding:14px 8px; gap:8px; border-radius:12px; }
+    .social-card .icon{ width:36px; height:36px; }
+    .social-card .icon svg{ width:16px; height:16px; }
+    .social-card .handle{ font-size:12px; word-break:break-word; }
+    .social-card .platform{ font-size:10px; }
+    /* Hover-only watermark has no effect on touch devices, so hide it to avoid a permanent faint logo */
+    .social-watermark{ display:none; }
+  }
 
   .social-card{
     position:relative; overflow:hidden;
