@@ -411,8 +411,9 @@
     .social-card .icon svg{ width:16px; height:16px; }
     .social-card .handle{ font-size:12px; word-break:break-word; }
     .social-card .platform{ font-size:10px; }
-    /* Hover-only watermark has no effect on touch devices, so hide it to avoid a permanent faint logo */
-    .social-watermark{ display:none; }
+    /* Keep the watermark, just scaled down and always faintly visible
+       since there's no hover state on touch devices */
+    .social-watermark{ width:64px; height:64px; top:-8px; right:-8px; opacity:0.10; }
   }
 
   .social-card{
