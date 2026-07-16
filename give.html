@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Give — The Walk</title>
+<script>
+(function(){
+  try{
+    var saved = localStorage.getItem('theme');
+    var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --ink:#F1F3F6;
+    --paper:#06070a;
+    --line:rgba(255,255,255,0.15);
+    --muted:#9AA0AB;
+    --accent:#F1F3F6;
+    --glow-rgb:255,255,255;
+    --on-ink:#06070a;
+  }
+  :root[data-theme="light"]{
+    --ink:#0A0B0E;
+    --paper:#F5F5F3;
+    --line:rgba(10,11,14,0.15);
+    --muted:#5A5F68;
+    --accent:#0A0B0E;
+    --glow-rgb:10,11,14;
+    --on-ink:#F1F3F6;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .wrap{
+    max-width:560px;
+    margin:0 auto;
+    padding:40px 24px 120px;
+  }
+  .back-link{
+    display:inline-block;
+    color:var(--muted);
+    text-decoration:none;
+    font-size:14px;
+    margin-bottom:24px;
+  }
+  .back-link:hover{ color:var(--ink); }
+
+  .theme-toggle-btn{
+    position:fixed;
+    top:calc(16px + env(safe-area-inset-top, 0px));
+    right:calc(16px + env(safe-area-inset-right, 0px));
+    z-index:60;
+    width:38px; height:38px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    background:var(--paper); border:1.5px solid rgba(var(--glow-rgb),0.3);
+    color:var(--ink);
+    cursor:pointer; transition:background .2s ease, border-color .2s ease;
+    box-shadow:0 2px 10px rgba(0,0,0,0.2);
+  }
+  .theme-toggle-btn:hover{ background:rgba(var(--glow-rgb),0.08); }
+  h1{
+    font-size:22px;
+    font-weight:700;
+    margin:0 0 32px;
+    color:var(--ink);
+  }
+  .field{ margin-bottom:32px; }
+  .field label{
+    display:block;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:10px;
+  }
+
+  /* segmented toggle */
+  .segmented{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .segmented button{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:16px 12px;
+    background:transparent;
+    color:var(--ink);
+    border:none;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+    font-family:inherit;
+  }
+  .segmented button.active{
+    background:var(--ink);
+    color:var(--on-ink);
+  }
+  .segmented button:not(:last-child){ border-right:1px solid var(--line); }
+
+  /* frequency row (appears only when recurring) */
+  .freq-row{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .freq-row button{
+    flex:1;
+    padding:16px 8px;
+    background:transparent;
+    border:none;
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .freq-row button:not(:last-child){ border-right:1px solid var(--line); }
+  .freq-row button.active{ background:var(--ink); color:var(--on-ink); }
+
+  .recurring-only{ display:none; }
+  .recurring-only.show{ display:block; }
+
+  input[type="date"], select{
+    width:100%;
+    padding:16px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    font-size:16px;
+    color:var(--ink);
+    background:transparent;
+    appearance:none;
+    -webkit-appearance:none;
+    font-family:inherit;
+  }
+  select option{ background:#0a0a0c; color:var(--ink); }
+
+  .amount-box{
+    position:relative;
+  }
+  .amount-box .dollar{
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:22px;
+    font-weight:700;
+    color:var(--muted);
+  }
+  .amount-box input{
+    width:100%;
+    padding:16px 16px 16px 34px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    font-size:22px;
+    font-weight:700;
+    color:var(--ink);
+    background:transparent;
+    font-family:inherit;
+  }
+  .amount-hint{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .amount-hint.error{ color:#e0665a; }
+
+  .quick-amounts{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+    flex-wrap:wrap;
+  }
+  .quick-amounts button{
+    padding:8px 16px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .quick-amounts button.active{ background:var(--ink); color:var(--on-ink); border-color:var(--ink); }
+
+  .add-fund{
+    display:block;
+    margin:0 auto;
+    padding:14px 28px;
+    border-radius:999px;
+    border:1.5px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  .footer-bar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    background:var(--paper);
+    border-top:1px solid var(--line);
+    padding:16px 24px 24px;
+  }
+  .footer-inner{
+    max-width:560px;
+    margin:0 auto;
+  }
+  .next-btn{
+    width:100%;
+    padding:18px;
+    border-radius:999px;
+    border:none;
+    background:var(--ink);
+    color:var(--on-ink);
+    font-size:17px;
+    font-weight:700;
+    cursor:pointer;
+    transition:opacity .15s ease;
+    font-family:inherit;
+  }
+  .next-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .status{
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+    margin-top:10px;
+    min-height:16px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <button type="button" class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle light/dark mode">
+      <svg id="themeIconMoon" viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="themeIconSun" viewBox="0 0 24 24" width="16" height="16" style="display:none"><path fill="currentColor" d="M12 4.5a1 1 0 0 1-1-1V2a1 1 0 0 1 2 0v1.5a1 1 0 0 1-1 1zm0 15a1 1 0 0 1 1 1V22a1 1 0 0 1-2 0v-1.5a1 1 0 0 1 1-1zm7.5-7.5a1 1 0 0 1 1-1H22a1 1 0 0 1 0 2h-1.5a1 1 0 0 1-1-1zm-15 0a1 1 0 0 1 1 1v0a1 1 0 0 1-2 0v0a1 1 0 0 1 1-1zM18.36 5.64a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 1 1-1.42-1.42zM6.34 17.66a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 1 1-1.42-1.42zM18.36 18.36a1 1 0 0 1-1.42 1.42l-1.06-1.06a1 1 0 1 1 1.42-1.42zM6.34 6.34A1 1 0 0 1 4.92 4.92L6 6a1 1 0 1 1-1.42 1.42zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/></svg>
+    </button>
+    <a href="index.html" class="back-link">← Back to The Walk</a>
+    <h1>Support the walk</h1>
+
+    <div class="field">
+
+      <label>Gift type</label>
+      <div class="segmented" id="giftType">
+        <button type="button" class="active" data-value="one_time">Give one time</button>
+        <button type="button" data-value="recurring">Set up recurring</button>
+      </div>
+    </div>
+
+    <div class="field recurring-only" id="freqField">
+      <label>Frequency</label>
+      <div class="freq-row" id="freqRow">
+        <button type="button" class="active" data-value="week">Every week</button>
+        <button type="button" data-value="month">Every month</button>
+      </div>
+    </div>
+
+    <div class="field recurring-only" id="startField">
+      <label>Starting</label>
+      <input type="date" id="startDate">
+    </div>
+
+    <div class="field">
+      <label>Giving Type</label>
+      <select id="fund">
+        <option value="general">General Fund</option>
+        <option value="gear">Gear for the Road</option>
+        <option value="events">Walk Events</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Amount</label>
+      <div class="amount-box">
+        <span class="dollar">$</span>
+        <input type="number" id="amount" min="1" step="1" placeholder="0" inputmode="decimal">
+      </div>
+      <div class="amount-hint" id="amountHint">$1 minimum</div>
+      <div class="amount-hint" id="feeNote" style="margin-top:2px;"></div>
+      <div class="quick-amounts" id="quickAmounts">
+        <button type="button" data-value="10">$10</button>
+        <button type="button" data-value="25">$25</button>
+        <button type="button" data-value="50">$50</button>
+        <button type="button" data-value="100">$100</button>
+      </div>
+    </div>
+
+    <button type="button" class="add-fund">+ Add another fund</button>
+  </div>
+
+  <div class="footer-bar">
+    <div class="footer-inner">
+      <button type="button" class="next-btn" id="nextBtn" disabled>Next</button>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var giftType = 'one_time';
+  var frequency = 'week';
+  var amountInput = document.getElementById('amount');
+  var nextBtn = document.getElementById('nextBtn');
+  var hint = document.getElementById('amountHint');
+  var status = document.getElementById('status');
+  var startDate = document.getElementById('startDate');
+
+  var todayStr = new Date().toISOString().split('T')[0];
+  startDate.value = todayStr;
+  startDate.min = todayStr;
+
+  // gift type toggle
+  document.getElementById('giftType').addEventListener('click', function(e){
+    var btn = e.target.closest('button');
+    if(!btn) return;
+    giftType = btn.dataset.value;
+    this.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    document.querySelectorAll('.recurring-only').forEach(function(el){
+      el.classList.toggle('show', giftType === 'recurring');
+    });
+  });
+
+  // frequency toggle
+  document.getElementById('freqRow').addEventListener('click', function(e){
+    var btn = e.target.closest('button');
+    if(!btn) return;
+    frequency = btn.dataset.value;
+    this.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+  });
+
+  // quick amount buttons
+  document.getElementById('quickAmounts').addEventListener('click', function(e){
+    var btn = e.target.closest('button');
+    if(!btn) return;
+    amountInput.value = btn.dataset.value;
+    this.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    validate();
+  });
+
+  amountInput.addEventListener('input', function(){
+    document.querySelectorAll('#quickAmounts button').forEach(function(b){ b.classList.remove('active'); });
+    validate();
+  });
+
+  function validate(){
+    var val = parseFloat(amountInput.value);
+    var feeNote = document.getElementById('feeNote');
+    if(!val || val < 1 || isNaN(val)){
+      hint.textContent = '$1 minimum';
+      hint.classList.add('error');
+      nextBtn.disabled = true;
+      feeNote.textContent = '';
+      return false;
+    }
+    hint.textContent = '$1 minimum';
+    hint.classList.remove('error');
+    nextBtn.disabled = false;
+    var total = (val + 0.30) / (1 - 0.029);
+    feeNote.textContent = 'Total charged: $' + total.toFixed(2) + ' (includes processing fee so 100% of your $' + val.toFixed(2) + ' goes to the ministry)';
+    return true;
+  }
+
+  nextBtn.addEventListener('click', function(){
+    if(!validate()) return;
+
+    var payload = {
+      giftType: giftType,
+      frequency: giftType === 'recurring' ? frequency : null,
+      startDate: giftType === 'recurring' ? startDate.value : null,
+      fund: document.getElementById('fund').value,
+      amount: Math.round(parseFloat(amountInput.value) * 100) // cents, before fee gross-up (server adds the fee)
+    };
+
+    // Save the gift details so the verification pages can pick them
+    // back up once the phone number is confirmed.
+    sessionStorage.setItem('pendingGift', JSON.stringify(payload));
+    try{
+      var body = JSON.stringify({ type:'give_started' });
+      if(navigator.sendBeacon){ navigator.sendBeacon('/.netlify/functions/track-event', new Blob([body], {type:'application/json'})); }
+      else { fetch('/.netlify/functions/track-event', { method:'POST', headers:{'Content-Type':'application/json'}, body:body, keepalive:true }); }
+    }catch(e){}
+    window.location.href = 'verify-phone.html';
+  });
+
+  // ---------- theme toggle ----------
+  var themeBtn = document.getElementById('themeToggleBtn');
+  var iconMoon = document.getElementById('themeIconMoon');
+  var iconSun = document.getElementById('themeIconSun');
+
+  function currentTheme(){
+    return document.documentElement.getAttribute('data-theme') || 'dark';
+  }
+  function updateToggleUI(){
+    if(currentTheme() === 'light'){
+      iconMoon.style.display = 'none';
+      iconSun.style.display = '';
+    } else {
+      iconMoon.style.display = '';
+      iconSun.style.display = 'none';
+    }
+  }
+  updateToggleUI();
+  themeBtn.addEventListener('click', function(){
+    var next = currentTheme() === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('theme', next); }catch(e){}
+    updateToggleUI();
+  });
+  if(window.matchMedia){
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e){
+      try{
+        if(!localStorage.getItem('theme')){
+          document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
+          updateToggleUI();
+        }
+      }catch(err){}
+    });
+  }
+})();
+</script>
+</body>
+</html>
