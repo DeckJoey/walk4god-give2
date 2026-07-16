@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin Dashboard — The Walk</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#F1F3F6; --paper:#06070a; --card:#101216; --line:rgba(255,255,255,0.12);
+    --muted:#9AA0AB; --on-ink:#06070a; --gold:#D8B26A; --accent2:#7FB1E0; --red:#e0665a;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper); color:var(--ink); min-height:100vh;
+  }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 28px; border-bottom:1px solid var(--line); flex-wrap:wrap; gap:12px;
+  }
+  .topbar h1{ font-size:19px; margin:0; }
+  .topbar .who{ font-size:13px; color:var(--muted); }
+  .topbar-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  select, .btn{
+    background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:10px;
+    padding:9px 14px; font-size:14px; font-family:inherit; cursor:pointer;
+  }
+  .btn.primary{ background:var(--ink); color:var(--on-ink); border-color:var(--ink); font-weight:600; }
+  a.btn{ text-decoration:none; display:inline-block; }
+
+  .wrap{ max-width:1200px; margin:0 auto; padding:28px; }
+
+  .stat-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:28px; }
+  .stat-card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .stat-card .label{ font-size:12.5px; color:var(--muted); margin-bottom:6px; }
+  .stat-card .value{ font-size:24px; font-weight:700; }
+
+  .grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:20px; margin-bottom:20px; }
+  @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
+  .panel{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:20px; }
+  .panel-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .panel h2{ font-size:16px; margin:0; }
+  .panel canvas{ max-height:280px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  th{ text-align:left; color:var(--muted); font-weight:600; font-size:12.5px; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td{ padding:10px; border-bottom:1px solid var(--line); }
+  tr:last-child td{ border-bottom:none; }
+
+  .alert-row td{ color:var(--red); }
+
+  .empty{ color:var(--muted); font-size:14px; padding:24px 0; text-align:center; }
+  .locked{ color:var(--muted); font-size:14px; padding:24px 0; text-align:center; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>Admin Dashboard</h1>
+      <div class="who" id="whoLabel"></div>
+    </div>
+    <div class="topbar-actions">
+      <select id="rangeSelect">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <a href="admin-accounts.html" class="btn" id="accountsLink" style="display:none;">Accounts</a>
+      <button type="button" class="btn" id="logoutBtn">Log out</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="panel" id="alertsPanel" style="display:none;">
+      <div class="panel-head"><h2>⚠️ Recent failed payments</h2></div>
+      <div id="alertsWrap"></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head"><h2>Giving over time</h2></div>
+        <div id="givingOverTimeWrap"><canvas id="givingOverTimeChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Giving by category</h2></div>
+        <div id="givingByFundWrap"><canvas id="givingByFundChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head"><h2>One-time vs. recurring</h2></div>
+        <div id="givingTypeWrap"><canvas id="givingTypeChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Recurring giver retention</h2></div>
+        <div id="retentionWrap"><canvas id="retentionChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head"><h2>Social clicks by platform</h2></div>
+        <div id="socialWrap"><canvas id="socialChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Traffic sources</h2></div>
+        <div id="trafficWrap"><canvas id="trafficChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Page views over time</h2></div>
+      <div id="pageviewsWrap"><canvas id="pageviewsChart"></canvas></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-head"><h2>Give funnel</h2></div>
+      <div id="funnelWrap"><canvas id="funnelChart"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Recent gifts</h2>
+        <button type="button" class="btn" id="exportBtn">Export CSV</button>
+      </div>
+      <div id="giftsTableWrap"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
+  if(!token){ window.location.href = 'admin-login.html'; return; }
+  var user = JSON.parse(sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser') || '{}');
+
+  document.getElementById('whoLabel').textContent = 'Signed in as ' + (user.displayName || user.identifier || '');
+  if(user.permissions && user.permissions.manageAccounts){
+    document.getElementById('accountsLink').style.display = '';
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    sessionStorage.removeItem('adminToken'); sessionStorage.removeItem('adminUser');
+    localStorage.removeItem('adminToken'); localStorage.removeItem('adminUser');
+    window.location.href = 'admin-login.html';
+  });
+
+  var FUND_LABELS = { general: 'General Fund', gear: 'Gear for the Road', events: 'Walk Events' };
+  var charts = {};
+  var lastGifts = [];
+
+  function money(n){ return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
+  function ensureCanvas(wrapId, canvasId){
+    var wrap = document.getElementById(wrapId);
+    if(!document.getElementById(canvasId)){ wrap.innerHTML = '<canvas id="' + canvasId + '"></canvas>'; }
+  }
+  function showLocked(wrapId){ document.getElementById(wrapId).innerHTML = '<div class="locked">You don\'t have permission to view this.</div>'; }
+  function showEmpty(wrapId, msg){ document.getElementById(wrapId).innerHTML = '<div class="empty">' + msg + '</div>'; }
+
+  function load(){
+    var days = document.getElementById('rangeSelect').value;
+    fetch('/.netlify/functions/admin-data?days=' + days, { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function(res){
+        if(res.status === 401){
+          sessionStorage.removeItem('adminToken'); localStorage.removeItem('adminToken');
+          window.location.href = 'admin-login.html';
+          throw new Error('logged out');
+        }
+        return res.json();
+      })
+      .then(function(data){
+        if(!data.ok) return;
+        renderStats(data);
+        renderAlerts(data);
+        renderGiving(data);
+        renderRetention(data);
+        renderSocial(data);
+        renderTraffic(data);
+        renderPageviews(data);
+        renderFunnel(data);
+      }).catch(function(err){ console.error(err); });
+  }
+
+  function renderStats(data){
+    var cards = [];
+    if(data.gifts){
+      var total = data.gifts.reduce(function(s,g){ return s + g.amountIntended; }, 0);
+      var count = data.gifts.length;
+      var avg = count ? total / count : 0;
+      var recurring = data.gifts.filter(function(g){ return g.giftType === 'recurring'; }).length;
+      cards.push({ label: 'Total given (period)', value: money(total) });
+      cards.push({ label: 'Gifts', value: String(count) });
+      cards.push({ label: 'Average gift', value: money(avg) });
+      cards.push({ label: 'Recurring charges', value: String(recurring) });
+    }
+    if(data.events){
+      var socialClicks = data.events.filter(function(e){ return e.type === 'social_click'; }).length;
+      cards.push({ label: 'Social clicks', value: String(socialClicks) });
+    }
+    if(data.pageViews){
+      cards.push({ label: 'Page views', value: String(data.pageViews.length) });
+    }
+    document.getElementById('statRow').innerHTML = cards.map(function(c){
+      return '<div class="stat-card"><div class="label">' + c.label + '</div><div class="value">' + c.value + '</div></div>';
+    }).join('');
+  }
+
+  function renderAlerts(data){
+    var panel = document.getElementById('alertsPanel');
+    if(!data.alerts || !data.alerts.length){ panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    var rows = data.alerts.slice().sort(function(a,b){ return b.ts - a.ts; }).slice(0, 20);
+    var html = '<table><thead><tr><th>Date</th><th>Email</th><th>Category</th><th>Amount</th></tr></thead><tbody>';
+    rows.forEach(function(a){
+      html += '<tr class="alert-row"><td>' + new Date(a.ts).toLocaleDateString() + '</td><td>' + (a.email || '—') +
+        '</td><td>' + (FUND_LABELS[a.fund] || a.fund) + '</td><td>' + money(a.amount) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('alertsWrap').innerHTML = html;
+  }
+
+  function renderGiving(data){
+    if(!data.gifts){
+      showLocked('givingOverTimeWrap'); showLocked('givingByFundWrap'); showLocked('givingTypeWrap');
+      document.getElementById('giftsTableWrap').innerHTML = '<div class="locked">You don\'t have permission to view this.</div>';
+      return;
+    }
+    var gifts = data.gifts;
+    lastGifts = gifts;
+    if(!gifts.length){
+      showEmpty('givingOverTimeWrap', 'No gifts yet in this period.');
+      showEmpty('givingByFundWrap', 'No gifts yet in this period.');
+      showEmpty('givingTypeWrap', 'No gifts yet in this period.');
+      document.getElementById('giftsTableWrap').innerHTML = '<div class="empty">No gifts yet in this period.</div>';
+      return;
+    }
+
+    ensureCanvas('givingOverTimeWrap', 'givingOverTimeChart');
+    var byDay = {};
+    gifts.forEach(function(g){ byDay[g.day] = (byDay[g.day] || 0) + g.amountIntended; });
+    var days = Object.keys(byDay).sort();
+    destroyChart('overTime');
+    charts.overTime = new Chart(document.getElementById('givingOverTimeChart'), {
+      type: 'line',
+      data: { labels: days, datasets: [{ label:'Given', data: days.map(function(d){ return byDay[d]; }), borderColor:'#D8B26A', backgroundColor:'rgba(216,178,106,0.15)', fill:true, tension:0.3 }] },
+      options: { responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback:function(v){ return '$'+v; } } } } }
+    });
+
+    ensureCanvas('givingByFundWrap', 'givingByFundChart');
+    var byFund = {};
+    gifts.forEach(function(g){ var f = g.fund || 'general'; byFund[f] = (byFund[f] || 0) + g.amountIntended; });
+    destroyChart('byFund');
+    charts.byFund = new Chart(document.getElementById('givingByFundChart'), {
+      type: 'doughnut',
+      data: { labels: Object.keys(byFund).map(function(f){ return FUND_LABELS[f] || f; }), datasets: [{ data: Object.values(byFund), backgroundColor:['#D8B26A','#7FB1E0','#B98CE0','#7CC59E'] }] },
+      options: { responsive:true, plugins:{legend:{position:'bottom'}} }
+    });
+
+    ensureCanvas('givingTypeWrap', 'givingTypeChart');
+    var oneTime = gifts.filter(function(g){ return g.giftType !== 'recurring'; }).length;
+    var recurring = gifts.filter(function(g){ return g.giftType === 'recurring'; }).length;
+    destroyChart('byType');
+    charts.byType = new Chart(document.getElementById('givingTypeChart'), {
+      type: 'doughnut',
+      data: { labels: ['One-time','Recurring'], datasets: [{ data:[oneTime, recurring], backgroundColor:['#7FB1E0','#D8B26A'] }] },
+      options: { responsive:true, plugins:{legend:{position:'bottom'}} }
+    });
+
+    var rows = gifts.slice().sort(function(a,b){ return b.ts - a.ts; }).slice(0, 50);
+    var html = '<table><thead><tr><th>Date</th><th>Email</th><th>Category</th><th>Type</th><th>Amount</th></tr></thead><tbody>';
+    rows.forEach(function(g){
+      var d = new Date(g.ts).toLocaleDateString();
+      html += '<tr><td>' + d + '</td><td>' + (g.email || '—') + '</td><td>' + (FUND_LABELS[g.fund] || g.fund) +
+        '</td><td>' + (g.giftType === 'recurring' ? (g.renewal ? 'Recurring (renewal)' : 'Recurring (first)') : 'One-time') +
+        '</td><td>' + money(g.amountIntended) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('giftsTableWrap').innerHTML = html;
+  }
+
+  function renderRetention(data){
+    if(!data.subscriptions){ showLocked('retentionWrap'); return; }
+    if(!data.subscriptions.length){ showEmpty('retentionWrap', 'No recurring activity yet in this period.'); return; }
+    ensureCanvas('retentionWrap', 'retentionChart');
+    var byDay = {};
+    data.subscriptions.forEach(function(s){
+      byDay[s.day] = byDay[s.day] || { created:0, canceled:0 };
+      if(s.event === 'created') byDay[s.day].created++;
+      else if(s.event === 'canceled') byDay[s.day].canceled++;
+    });
+    var days = Object.keys(byDay).sort();
+    destroyChart('retention');
+    charts.retention = new Chart(document.getElementById('retentionChart'), {
+      type: 'bar',
+      data: {
+        labels: days,
+        datasets: [
+          { label:'New recurring', data: days.map(function(d){ return byDay[d].created; }), backgroundColor:'#7CC59E' },
+          { label:'Canceled', data: days.map(function(d){ return -byDay[d].canceled; }), backgroundColor:'#e0665a' },
+        ]
+      },
+      options: { responsive:true, plugins:{legend:{position:'bottom'}}, scales:{ y:{ ticks:{ precision:0 } } } }
+    });
+  }
+
+  function renderSocial(data){
+    if(!data.events){ showLocked('socialWrap'); return; }
+    var clicks = data.events.filter(function(e){ return e.type === 'social_click'; });
+    if(!clicks.length){ showEmpty('socialWrap', 'No social clicks yet in this period.'); return; }
+    ensureCanvas('socialWrap', 'socialChart');
+    var byPlatform = {};
+    clicks.forEach(function(e){ byPlatform[e.platform] = (byPlatform[e.platform] || 0) + 1; });
+    destroyChart('social');
+    charts.social = new Chart(document.getElementById('socialChart'), {
+      type: 'bar',
+      data: { labels: Object.keys(byPlatform), datasets: [{ label:'Clicks', data: Object.values(byPlatform), backgroundColor:'#7FB1E0' }] },
+      options: { responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+    });
+  }
+
+  function renderTraffic(data){
+    if(!data.pageViews){ showLocked('trafficWrap'); return; }
+    if(!data.pageViews.length){ showEmpty('trafficWrap', 'No visits yet in this period.'); return; }
+    ensureCanvas('trafficWrap', 'trafficChart');
+    var bySource = {};
+    data.pageViews.forEach(function(v){ var s = v.source || 'direct'; bySource[s] = (bySource[s] || 0) + 1; });
+    destroyChart('traffic');
+    charts.traffic = new Chart(document.getElementById('trafficChart'), {
+      type: 'doughnut',
+      data: { labels: Object.keys(bySource), datasets: [{ data: Object.values(bySource), backgroundColor:['#D8B26A','#7FB1E0','#B98CE0','#7CC59E','#e0665a','#9AA0AB'] }] },
+      options: { responsive:true, plugins:{legend:{position:'bottom'}} }
+    });
+  }
+
+  function renderPageviews(data){
+    if(!data.pageViews){ showLocked('pageviewsWrap'); return; }
+    if(!data.pageViews.length){ showEmpty('pageviewsWrap', 'No visits yet in this period.'); return; }
+    ensureCanvas('pageviewsWrap', 'pageviewsChart');
+    var byDay = {};
+    data.pageViews.forEach(function(v){ byDay[v.day] = (byDay[v.day] || 0) + 1; });
+    var days = Object.keys(byDay).sort();
+    destroyChart('pageviews');
+    charts.pageviews = new Chart(document.getElementById('pageviewsChart'), {
+      type: 'line',
+      data: { labels: days, datasets: [{ label:'Page views', data: days.map(function(d){ return byDay[d]; }), borderColor:'#7FB1E0', backgroundColor:'rgba(127,177,224,0.15)', fill:true, tension:0.3 }] },
+      options: { responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+    });
+  }
+
+  function renderFunnel(data){
+    if(!data.events && !data.gifts){ showLocked('funnelWrap'); return; }
+    var started = data.events ? data.events.filter(function(e){ return e.type === 'give_started'; }).length : 0;
+    var verified = data.events ? data.events.filter(function(e){ return e.type === 'phone_verified'; }).length : 0;
+    var completed = data.gifts ? data.gifts.filter(function(g){ return !g.renewal; }).length : 0;
+    if(!started && !verified && !completed){ showEmpty('funnelWrap', 'No funnel activity yet in this period.'); return; }
+    ensureCanvas('funnelWrap', 'funnelChart');
+    destroyChart('funnel');
+    charts.funnel = new Chart(document.getElementById('funnelChart'), {
+      type: 'bar',
+      data: { labels: ['Started giving','Verified phone','Completed gift'], datasets: [{ data:[started, verified, completed], backgroundColor:['#7FB1E0','#B98CE0','#D8B26A'] }] },
+      options: { indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ beginAtZero:true, ticks:{ precision:0 } } } }
+    });
+  }
+
+  document.getElementById('exportBtn').addEventListener('click', function(){
+    if(!lastGifts.length){ alert('No gifts to export in this period.'); return; }
+    var rows = [['Date','Email','Category','Type','Amount']];
+    lastGifts.slice().sort(function(a,b){ return b.ts - a.ts; }).forEach(function(g){
+      rows.push([
+        new Date(g.ts).toISOString(),
+        g.email || '',
+        FUND_LABELS[g.fund] || g.fund,
+        g.giftType === 'recurring' ? (g.renewal ? 'Recurring (renewal)' : 'Recurring (first)') : 'One-time',
+        g.amountIntended.toFixed(2)
+      ]);
+    });
+    var csv = rows.map(function(r){
+      return r.map(function(cell){
+        var s = String(cell);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+      }).join(',');
+    }).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'giving-export-' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('rangeSelect').addEventListener('change', load);
+  load();
+})();
+</script>
+</body>
+</html>

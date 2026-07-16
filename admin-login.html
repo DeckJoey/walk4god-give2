@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin Login — The Walk</title>
+<style>
+  :root{
+    --ink:#F1F3F6; --paper:#06070a; --line:rgba(255,255,255,0.15);
+    --muted:#9AA0AB; --on-ink:#06070a;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; min-height:100vh;
+  }
+  .card{ width:100%; max-width:400px; padding:0 24px; }
+  .eyebrow{ font-size:13px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  h1{ font-size:22px; font-weight:700; margin:0 0 28px; }
+  .field{ margin-bottom:20px; }
+  .field label{ display:block; font-size:14px; font-weight:600; margin-bottom:10px; }
+  input{
+    width:100%; padding:16px; border:1px solid var(--line); border-radius:12px;
+    background:transparent; color:var(--ink); font-size:16px; font-family:inherit;
+  }
+  input:focus{ outline:none; border-color:var(--ink); }
+  .remember-row{ display:flex; align-items:center; gap:10px; font-size:14px; color:var(--muted); margin-bottom:20px; }
+  .remember-row input{ width:auto; padding:0; }
+  .error-msg{ margin-top:8px; font-size:13px; color:#e0665a; min-height:16px; }
+  .next-btn{
+    width:100%; padding:18px; border-radius:999px; border:none;
+    background:var(--ink); color:var(--on-ink); font-size:17px; font-weight:700;
+    cursor:pointer; margin-top:8px; font-family:inherit;
+  }
+  .next-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .status{ text-align:center; font-size:13px; color:var(--muted); margin-top:14px; min-height:16px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">The Walk</div>
+    <h1>Admin sign in</h1>
+
+    <div class="field">
+      <label>Email or phone</label>
+      <input type="text" id="identifier" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" autocomplete="current-password">
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+    <div class="remember-row">
+      <input type="checkbox" id="remember">
+      <label for="remember">Remember this device for 30 days</label>
+    </div>
+
+    <button type="button" class="next-btn" id="loginBtn">Sign in</button>
+    <div class="status" id="status"></div>
+  </div>
+
+<script>
+(function(){
+  // Already logged in? Skip straight to the dashboard.
+  if(sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken')){
+    window.location.href = 'admin.html';
+    return;
+  }
+
+  var identifierInput = document.getElementById('identifier');
+  var passwordInput = document.getElementById('password');
+  var rememberInput = document.getElementById('remember');
+  var loginBtn = document.getElementById('loginBtn');
+  var errorMsg = document.getElementById('errorMsg');
+  var status = document.getElementById('status');
+
+  function submit(){
+    var identifier = identifierInput.value.trim();
+    var password = passwordInput.value;
+    var remember = rememberInput.checked;
+    if(!identifier || !password){
+      errorMsg.textContent = 'Enter your email/phone and password.';
+      return;
+    }
+    errorMsg.textContent = '';
+    loginBtn.disabled = true;
+    status.textContent = 'Signing in…';
+
+    fetch('/.netlify/functions/admin-login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ identifier: identifier, password: password, remember: remember })
+    }).then(function(res){ return res.json(); }).then(function(data){
+      if(data.ok){
+        if(remember){
+          localStorage.setItem('adminToken', data.token);
+          localStorage.setItem('adminUser', JSON.stringify(data.user));
+        } else {
+          sessionStorage.setItem('adminToken', data.token);
+          sessionStorage.setItem('adminUser', JSON.stringify(data.user));
+        }
+        window.location.href = 'admin.html';
+      } else {
+        errorMsg.textContent = data.error || 'Could not sign in.';
+        status.textContent = '';
+        loginBtn.disabled = false;
+      }
+    }).catch(function(){
+      errorMsg.textContent = 'Network error. Please try again.';
+      status.textContent = '';
+      loginBtn.disabled = false;
+    });
+  }
+
+  loginBtn.addEventListener('click', submit);
+  passwordInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') submit(); });
+})();
+</script>
+</body>
+</html>

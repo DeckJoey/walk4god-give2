@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Manage Accounts — The Walk</title>
+<style>
+  :root{
+    --ink:#F1F3F6; --paper:#06070a; --card:#101216; --line:rgba(255,255,255,0.12);
+    --muted:#9AA0AB; --on-ink:#06070a;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper); color:var(--ink); min-height:100vh;
+  }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 28px; border-bottom:1px solid var(--line); flex-wrap:wrap; gap:12px;
+  }
+  .topbar h1{ font-size:19px; margin:0; }
+  .btn{
+    background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:10px;
+    padding:9px 14px; font-size:14px; font-family:inherit; cursor:pointer; text-decoration:none; display:inline-block;
+  }
+  .btn.primary{ background:var(--ink); color:var(--on-ink); border-color:var(--ink); font-weight:600; }
+  .btn.danger{ border-color:#e0665a; color:#e0665a; }
+  .btn.small{ padding:6px 10px; font-size:12.5px; }
+
+  .wrap{ max-width:960px; margin:0 auto; padding:28px; }
+  .panel{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:22px; }
+  .panel h2{ font-size:16px; margin:0 0 16px; }
+
+  .account-card{ border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px; }
+  .account-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .account-name{ font-weight:700; font-size:15.5px; }
+  .account-id{ color:var(--muted); font-size:13px; margin-top:2px; }
+  .badge{ display:inline-block; font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:999px; background:rgba(216,178,106,0.18); color:#D8B26A; margin-left:8px; }
+  .perm-row{ display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-size:13.5px; color:var(--muted); }
+  .perm-row label{ display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .devices{ margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  .device-row{ display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); padding:6px 0; }
+  .account-actions{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:13.5px; font-weight:600; margin-bottom:8px; }
+  input[type="text"], input[type="password"]{
+    width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:10px;
+    background:transparent; color:var(--ink); font-size:15px; font-family:inherit;
+  }
+  .status{ font-size:13px; color:var(--muted); margin-top:10px; min-height:16px; }
+  .error-msg{ font-size:13px; color:#e0665a; margin-top:8px; min-height:16px; }
+  .locked{ color:var(--muted); font-size:14px; padding:24px 0; text-align:center; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; color:var(--muted); font-weight:600; font-size:12px; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td{ padding:9px 10px; border-bottom:1px solid var(--line); color:var(--muted); }
+  tr:last-child td{ border-bottom:none; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>Manage Accounts</h1>
+    <a href="admin.html" class="btn">← Back to dashboard</a>
+  </div>
+
+  <div class="wrap">
+    <div id="content"></div>
+  </div>
+
+<script>
+(function(){
+  var token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
+  if(!token){ window.location.href = 'admin-login.html'; return; }
+  var me = JSON.parse(sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser') || '{}');
+  var content = document.getElementById('content');
+
+  if(!me.permissions || !me.permissions.manageAccounts){
+    content.innerHTML = '<div class="panel"><div class="locked">You don\'t have permission to manage accounts.</div></div>';
+    return;
+  }
+
+  function authFetch(url, opts){
+    opts = opts || {};
+    opts.headers = Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + token });
+    return fetch(url, opts).then(function(res){
+      if(res.status === 401){
+        sessionStorage.removeItem('adminToken'); localStorage.removeItem('adminToken');
+        window.location.href = 'admin-login.html';
+        throw new Error('logged out');
+      }
+      return res.json();
+    });
+  }
+
+  function timeAgo(ts){
+    var mins = Math.round((Date.now() - ts) / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return mins + 'm ago';
+    var hrs = Math.round(mins / 60);
+    if(hrs < 24) return hrs + 'h ago';
+    return Math.round(hrs / 24) + 'd ago';
+  }
+
+  function render(accounts){
+    var html = '';
+
+    html += '<div class="panel"><h2>Add an account</h2>' +
+      '<div class="field"><label>Display name</label><input type="text" id="newName" placeholder="e.g. Kathleen Wood"></div>' +
+      '<div class="field"><label>Email or phone (used to log in)</label><input type="text" id="newIdentifier"></div>' +
+      '<div class="field"><label>Temporary password</label><input type="password" id="newPassword" placeholder="At least 8 characters"></div>' +
+      '<div class="perm-row">' +
+        '<label><input type="checkbox" id="newPermGiving"> View giving stats</label>' +
+        '<label><input type="checkbox" id="newPermSocial"> View social stats</label>' +
+        '<label><input type="checkbox" id="newPermManage"> Manage accounts</label>' +
+      '</div>' +
+      '<div class="error-msg" id="addError"></div>' +
+      '<button type="button" class="btn primary" id="addBtn" style="margin-top:14px;">Add account</button>' +
+      '<div class="status" id="addStatus"></div>' +
+    '</div>';
+
+    html += '<div class="panel"><h2>Accounts</h2>';
+    accounts.forEach(function(a){
+      html += '<div class="account-card" data-id="' + a.id + '">';
+      html += '<div class="account-head"><div><span class="account-name">' + (a.displayName || a.identifier) +
+        (a.isOwner ? '<span class="badge">Owner</span>' : '') +
+        (a.disabled ? '<span class="badge" style="background:rgba(224,102,90,0.18);color:#e0665a;">Disabled</span>' : '') +
+        '</span><div class="account-id">' + a.identifier + '</div></div></div>';
+
+      if(!a.isOwner){
+        html += '<div class="perm-row">' +
+          '<label><input type="checkbox" class="perm-giving" ' + (a.permissions.viewGiving ? 'checked' : '') + '> View giving stats</label>' +
+          '<label><input type="checkbox" class="perm-social" ' + (a.permissions.viewSocial ? 'checked' : '') + '> View social stats</label>' +
+          '<label><input type="checkbox" class="perm-manage" ' + (a.permissions.manageAccounts ? 'checked' : '') + '> Manage accounts</label>' +
+        '</div>';
+      }
+
+      if(a.devices && a.devices.length){
+        html += '<div class="devices">';
+        a.devices.forEach(function(d){
+          html += '<div class="device-row"><span>' + d.device + ' · last active ' + timeAgo(d.lastSeenAt) + '</span>' +
+            '<button type="button" class="btn small revoke-btn" data-user="' + a.id + '" data-session="' + d.sessionId + '">Log out</button></div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="devices" style="color:var(--muted);font-size:13px;">No active devices.</div>';
+      }
+
+      if(!a.isOwner){
+        html += '<div class="account-actions">' +
+          '<button type="button" class="btn small save-perms-btn">Save permissions</button>' +
+          '<button type="button" class="btn small toggle-disable-btn">' + (a.disabled ? 'Enable account' : 'Disable account') + '</button>' +
+          '<button type="button" class="btn small danger delete-btn">Delete account</button>' +
+        '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="panel"><h2>Recent activity</h2><div id="activityWrap"></div></div>';
+
+    content.innerHTML = html;
+    wireEvents();
+    authFetch('/.netlify/functions/admin-activity').then(function(data){
+      if(data.ok) renderActivity(data.entries);
+    });
+  }
+
+  function load(){
+    authFetch('/.netlify/functions/admin-accounts-list').then(function(data){
+      if(data.ok) render(data.accounts);
+    });
+  }
+
+  function renderActivity(entries){
+    var wrap = document.getElementById('activityWrap');
+    if(!entries.length){ wrap.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:12px 0;">No activity yet.</div>'; return; }
+    var html = '<table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Detail</th></tr></thead><tbody>';
+    entries.forEach(function(e){
+      html += '<tr><td>' + timeAgo(e.ts) + '</td><td>' + e.actor + '</td><td>' + e.action + '</td><td>' + (e.detail || '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function wireEvents(){
+    document.getElementById('addBtn').addEventListener('click', function(){
+      var identifier = document.getElementById('newIdentifier').value.trim();
+      var displayName = document.getElementById('newName').value.trim();
+      var password = document.getElementById('newPassword').value;
+      var permissions = {
+        viewGiving: document.getElementById('newPermGiving').checked,
+        viewSocial: document.getElementById('newPermSocial').checked,
+        manageAccounts: document.getElementById('newPermManage').checked,
+      };
+      var errorMsg = document.getElementById('addError');
+      var status = document.getElementById('addStatus');
+      if(!identifier || !password){
+        errorMsg.textContent = 'Email/phone and a password are required.';
+        return;
+      }
+      errorMsg.textContent = '';
+      status.textContent = 'Adding…';
+      authFetch('/.netlify/functions/admin-accounts-save', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ identifier: identifier, displayName: displayName, password: password, permissions: permissions })
+      }).then(function(data){
+        if(data.ok){ load(); } else { errorMsg.textContent = data.error || 'Could not add account.'; status.textContent = ''; }
+      });
+    });
+
+    document.querySelectorAll('.account-card').forEach(function(card){
+      var userId = card.getAttribute('data-id');
+
+      var saveBtn = card.querySelector('.save-perms-btn');
+      if(saveBtn){
+        saveBtn.addEventListener('click', function(){
+          var permissions = {
+            viewGiving: card.querySelector('.perm-giving').checked,
+            viewSocial: card.querySelector('.perm-social').checked,
+            manageAccounts: card.querySelector('.perm-manage').checked,
+          };
+          authFetch('/.netlify/functions/admin-accounts-save', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ userId: userId, permissions: permissions })
+          }).then(function(){ load(); });
+        });
+      }
+
+      var toggleBtn = card.querySelector('.toggle-disable-btn');
+      if(toggleBtn){
+        toggleBtn.addEventListener('click', function(){
+          var isCurrentlyDisabled = toggleBtn.textContent.indexOf('Enable') === 0;
+          authFetch('/.netlify/functions/admin-accounts-save', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ userId: userId, disabled: !isCurrentlyDisabled })
+          }).then(function(){ load(); });
+        });
+      }
+
+      var deleteBtn = card.querySelector('.delete-btn');
+      if(deleteBtn){
+        deleteBtn.addEventListener('click', function(){
+          if(!confirm('Permanently delete this account?')) return;
+          authFetch('/.netlify/functions/admin-accounts-delete', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ userId: userId })
+          }).then(function(){ load(); });
+        });
+      }
+    });
+
+    document.querySelectorAll('.revoke-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        authFetch('/.netlify/functions/admin-session-revoke', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ userId: btn.getAttribute('data-user'), sessionId: btn.getAttribute('data-session') })
+        }).then(function(){ load(); });
+      });
+    });
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
